@@ -19,9 +19,9 @@ def bivariate_gausssain(x,y,mux,muy, varx, vary, corr):
     y_hat = (y - muy) / torch.sqrt(vary)                   # (B * L * M)
     z = x_hat**2 + y_hat**2 - (2*corr * x_hat * y_hat)  # (B * L * M)
     t1 = 2.0 * torch.pi * torch.sqrt(varx*vary) * torch.sqrt(1-corr**2)
-    t2 = torch.exp(-z / (2.0*(1-corr*2)))
+    t2 = torch.exp(-z / (2.0*(1-corr*2))) 
     N = t2 / t1
-    return N 
+    return N                                            #(B * L * M)
 
 
 # B, L, M = 2, 5, 3

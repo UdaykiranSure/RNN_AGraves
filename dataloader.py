@@ -1,7 +1,8 @@
 import xml.etree.ElementTree as ET
 import os
 import numpy as np
-from torch.utils.data import DataLoader  
+from torch.utils.data import DataLoader 
+from torch.nn.utils.rnn import pad_sequence  
 import torch
 
 def list_directories(root_dir):
@@ -55,9 +56,41 @@ def extract_sequences(data_dir):
           sequences.append(sequence)
      return sequences
 
-data_dir = "data/linestrokes"
+def collate_fn(batch):
+     max_len = 200
+     sequences = []
+     lengths = []
+     lens = [len(seq) for seq in batch]
+    #  print('lens before trunc:', lens)
+     for seq in batch:
+          seq = torch.tensor(seq, dtype=torch.float32)
+          seq = seq[:max_len]
+          lengths.append(len(seq))
+          sequences.append(seq)
+     padded = pad_sequence(sequences, batch_first= True)
+    #  print(lengths)
+    
+     return padded,lengths
+
+def get_dataloader(data_dir,batch_size):
+    sequences = extract_sequences(data_dir)
+    dataloader = DataLoader(sequences,batch_size, collate_fn=collate_fn)
+    return dataloader
 
 
+
+
+
+# data_dir = '/Users/udaykiran/ML/ResearchPapers/rnn_graves/data/lineStrokes'
+# batch_size = 32
+# tr_dataloader = get_dataloader(data_dir, batch_size)
+# for batch, lengths in tr_dataloader:
+#      print(batch.shape, len(lengths))
+#      break
+
+# sequences = extract_sequences(data_dir)
+# for seq in sequences:
+#      pass
 
 
 

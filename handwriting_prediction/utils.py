@@ -1,26 +1,28 @@
 import torch
 
-def bivariate_gausssain(x,y,mux,muy, varx, vary, corr):
+def bivariate_gaussian(x,y,mux,muy,stdx,stdy, corr):
     """
     params: 
         x: (B * L * 1)
         y: (B * L * 1)
         mux: (B * L * M)
         muy: (B * L * M)
-        varx:(B * L * M)
-        vary:(B * L * M)
+        stdx:(B * L * M)
+        stdy:(B * L * M)
         corr:(B * L * M)
 
     output:
         prob : (B * L * M)
     """
     corr = torch.clamp(corr, min=-0.999, max = 0.999)
-    x_hat = (x - mux) / torch.clamp(torch.sqrt(varx), min = 1e-7)                   # (B * L * M)
-    y_hat = (y - muy) /torch.clamp(torch.sqrt(vary), min = 1e-7)               # (B * L * M)
+    x_hat = (x - mux) / torch.clamp(stdx, min = 1e-7)   # (B * L * M)
+    y_hat = (y - muy) /torch.clamp(stdy, min = 1e-7)    # (B * L * M)
     z = x_hat**2 + y_hat**2 - (2*corr * x_hat * y_hat)  # (B * L * M)
-    t1 = 2.0 * torch.pi * torch.sqrt(varx*vary) * torch.sqrt(1-corr**2)
-    t2 = torch.exp(-z / (2.0*(1-corr*2))) 
+    t1 = 2.0 * torch.pi * stdx * stdy * torch.sqrt(1-corr**2)
+    t2 = torch.exp(-z / (2.0*(1-corr**2))) 
     N = t2 / t1
+    if not torch.isfinite(N).all():
+        print('nan in bivariate')
     return N                                            #(B * L * M)
 
 

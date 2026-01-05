@@ -5,9 +5,10 @@ from dataloader import get_dataloader
 
 def train(model, tr_dataloader,lr, epochs, criterion,M = 20):
 
+    print('using rms prop')
+    # optimiser = torch.optim.SGD(model.parameters(), lr)
+    optimiser = torch.optim.RMSprop(model.parameters(),lr,alpha=0.95, eps =0.0001,centered=True, momentum=0.9)
 
-    # optimiser = torch.optim.RMSprop(model.parameter(),lr,alpha=N, eps = C, )
-    optimiser = torch.optim.SGD(model.parameters(), lr)
     losses = []
     model.train()
     for epoch in range(1, epochs+1):

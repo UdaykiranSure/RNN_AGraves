@@ -1,15 +1,20 @@
-from dataloader import get_dataloader
+import dataloader as dataloader
+import importlib
 from handwriting_prediction.model import model
 from handwriting_prediction.loss import MDN_Loss
-from handwriting_prediction.trainer import train
+import handwriting_prediction.trainer as trainer
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from torch.nn import LSTM
 import numpy as np
 import torch
 import math
+
+importlib.reload(trainer)
+importlib.reload(dataloader)
+
 data_dir = '/Users/udaykiran/ML/ResearchPapers/rnn_graves/data/lineStrokes'
 batch_size = 32
-tr_dataloader = get_dataloader(data_dir,batch_size)
+tr_dataloader = dataloader.get_dataloader(data_dir,batch_size)
 
 
 # M = 20
@@ -27,8 +32,6 @@ tr_dataloader = get_dataloader(data_dir,batch_size)
 # torch.isfinite(unpacked).all()
 
 M = 20
-
-
 in_size = 3
 h_size = 400
 out_size = 6*M + 1
@@ -40,13 +43,23 @@ criterion = MDN_Loss
 lr = 0.01
 epochs = 3
 
-losses = train(hp_model,tr_dataloader,lr,epochs= epochs, criterion= criterion)
-losses.shape
+losses = trainer.train(hp_model,tr_dataloader,lr,epochs= epochs, criterion= criterion)
 
-losses[:,:,:1]
-for batch in losses:
-    for seq in batch:
-        if torch.isnan(seq[0]):
-            print('not a number', seq)
-        elif not torch.isfinite(seq[0]):
-            print(seq)
+
+MODEL_PATH = './handwriting_prediction.pth'
+LOSS_PATH  = './losses_1.npy'
+
+np.save( LOSS_PATH, np.array(losses))
+
+torch.save(hp_model.state_dict(), MODEL_PATH)
+print(f'model save to path : {MODEL_PATH}')
+
+
+
+
+#for batch in losses:
+#     for seq in batch:
+#         if torch.isnan(torch.tensor(seq)):
+#             print('not a number', seq)
+#         elif not torch.isfinite(torch.tensor(seq)):
+#             print('infinite:',seq)

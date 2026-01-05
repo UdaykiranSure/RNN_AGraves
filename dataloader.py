@@ -63,7 +63,7 @@ def collate_fn(batch):
      lens = [len(seq) for seq in batch]
     #  print('lens before trunc:', lens)
      for seq in batch:
-          seq = torch.tensor(seq, dtype=torch.float32)
+          seq = torch.from_numpy(seq, dtype=torch.float32)
           seq = seq[:max_len]
           lengths.append(len(seq))
           sequences.append(seq)

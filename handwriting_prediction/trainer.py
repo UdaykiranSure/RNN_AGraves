@@ -3,11 +3,12 @@ import numpy as np
 import torch
 from dataloader import get_dataloader
 
-def train(model, tr_dataloader,lr, epochs, criterion,M = 20):
+def train(model, tr_dataloader,lr, epochs, criterion,M = 20,optim = 'sgd'):
 
-    print('using rms prop')
-    # optimiser = torch.optim.SGD(model.parameters(), lr)
-    optimiser = torch.optim.RMSprop(model.parameters(),lr,alpha=0.95, eps =0.0001,centered=True, momentum=0.9)
+    if optim  == 'rms':
+        optimiser = torch.optim.RMSprop(model.parameters(),lr,alpha=0.95, eps =0.0001,centered=True, momentum=0.9)
+    else:
+        optimiser = torch.optim.SGD(model.parameters(), lr)
 
     losses = []
     model.train()
@@ -15,7 +16,7 @@ def train(model, tr_dataloader,lr, epochs, criterion,M = 20):
         running_loss = []
         for batch_data,lengths in tr_dataloader:
                 optimiser.zero_grad()
-                outputs  = model.forward(batch_data,lengths)  #(B * L * 6M+1)
+                outputs,hidden  = model.forward(batch_data,lengths)  #(B * L * 6M+1)
                 if not torch.isfinite(outputs).all():
                      print('nan from model in trainer')
                 e_pred = outputs[:,:,:1]

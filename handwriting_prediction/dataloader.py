@@ -98,7 +98,7 @@ def extract_sequences(data_dir):
 
     for xml_path in xml_paths:
         if xml_path.endswith(".xml"):
-            print("processing", xml_path)
+          #   print("processing", xml_path)
             sequences.append(create_sequence(xml_path))
 
     return sequences

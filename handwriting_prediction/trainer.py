@@ -3,17 +3,20 @@ import numpy as np
 import torch
 from dataloader import get_dataloader
 
+
 def train(model, tr_dataloader,lr, epochs, criterion,M = 20,optim = 'sgd', device = 'cpu'):
     model.to(device=device)
-    if optim  == 'rms':
-        optimiser = torch.optim.RMSprop(model.parameters(),lr,alpha=0.95, eps =0.0001,centered=True, momentum=0.9)
+    if optim  == 'adam':
+        optimiser = torch.optim.AdamW(model.parameters(),lr)
     else:
         optimiser = torch.optim.SGD(model.parameters(), lr)
+    scheduler = CosineAnnealingLR(optimizer, T_max=epochs)
 
-    losses = []
+    train_losses = []
+    val_losses = []
     model.train()
     for epoch in range(1, epochs+1):
-        running_loss = []
+        running_train_loss = []
         for batch_data,lengths in tr_dataloader:
                 batch_data.to(device)
                 optimiser.zero_grad()
@@ -68,16 +71,15 @@ def train(model, tr_dataloader,lr, epochs, criterion,M = 20,optim = 'sgd', devic
                 )
 
                 running_val_loss.append(val_loss.item())
-
+        train_loss = np.mean(running_train_loss)
         val_loss = np.mean(running_val_loss)
         val_losses.append(val_loss)
-
+        train_losses.append(train_loss)
         print(
             f"epoch: {epoch}/{epochs} | "
             f"train loss: {train_loss:.4f} | "
             f"val loss: {val_loss:.4f}"
         )
-        losses.append(running_loss)
-    return losses
+    return (train_losses, val_losses)
 
 

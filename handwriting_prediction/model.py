@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence, PackedSequence
+
 class model(nn.Module):
     def __init__(self, in_size, h_size, out_size, num_layers):
         """
@@ -40,17 +41,19 @@ class model(nn.Module):
         return (h0, c0)
 
 
-    def forward(self, inputs,lengths, hidden = None):
-        packed = pack_padded_sequence(inputs,lengths, batch_first=True,enforce_sorted=False)
-        rnn_out, hidden = self.rnn_layer(packed, hidden) # (B * L * H), (B * H)
-        seq_unpacked, lens_unpacked = pad_packed_sequence(rnn_out,batch_first=True)
+    def forward(self, inputs,lengths=None, hidden = None):
+        if lengths is not None and inputs.size(1) > 1:
+            inputs = pack_padded_sequence(inputs,lengths, batch_first=True,enforce_sorted=False)
+        rnn_out, hidden = self.rnn_layer(inputs, hidden) # (B * L * H), (B * H)
+        if isinstance(rnn_out, PackedSequence):
+            rnn_out, lens_unpacked = pad_packed_sequence(rnn_out,batch_first=True)
 
-        if (lens_unpacked != torch.tensor(lengths)).all():
-            print('lengths not matched')
-        if not torch.isfinite(seq_unpacked).all():
-            print('nan in unpacked')
+        # if (lens_unpacked != torch.tensor(lengths)).all():
+        #     print('lengths not matched')
+        # if not torch.isfinite(rnn_out).all():
+        #     print('nan in unpacked')
 
-        x = self.output_layer(seq_unpacked) #output params order: (e, 1M(W) 2M(mu), 2M(std), 1M(corr)) => (1 + 6M) ;(B * L * (1+6M))
+        x = self.output_layer(rnn_out) #output params order: (e, 1M(W) 2M(mu), 2M(std), 1M(corr)) => (1 + 6M) ;(B * L * (1+6M))
         
         if not torch.isfinite(x).all():
             print('nan in model output layer') 
